@@ -95,7 +95,7 @@ var populate_tab_card = function(tab_card_element) {
         url:"/team/" + team_id + "/stats/",
         success: function(result) {
             result = result.result
-            var text = [result.wins, result.total_speaks.toFixed(2), result.govs, result.opps, result.seed].join(" / ")
+            var text = [result.wins, result.rmo.toFixed(2), result.total_speaks.toFixed(2), result.govs, result.opps, result.seed].join(" / ")
             tab_card_element.html("<a class=\"btn btn-link\" href=\"/team/card/"+team_id+"\">"+text+"</a>")
         },
     })

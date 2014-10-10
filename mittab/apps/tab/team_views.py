@@ -38,16 +38,18 @@ def view_team(request, team_id):
         stats = []
         stats.append(("Wins", tab_logic.tot_wins(team)))
         stats.append(("Total Speaks", tab_logic.tot_speaks(team)))
+        stats.append(("Total Ranks", tab_logic.tot_ranks(team)))
+        stats.append(("Opp Wins", tab_logic.opp_strength(team)))
+        stats.append(("Ranks - Opp Wins", tab_logic.tot_ranks(team) - tab_logic.opp_strength(team)))
         stats.append(("Govs", tab_logic.num_govs(team)))
         stats.append(("Opps", tab_logic.num_opps(team)))
-        stats.append(("Opp Wins", tab_logic.opp_strength(team)))
         stats.append(("Been Pullup", tab_logic.pull_up_count(team)))
         stats.append(("Hit Pullup", tab_logic.hit_pull_up_count(team)))
     except Team.DoesNotExist:
-        return render_to_response('error.html', 
+        return render_to_response('error.html',
                                  {'error_type': "View Team",
                                   'error_name': str(team_id),
-                                  'error_info':"No such Team"}, 
+                                  'error_info': "No such Team"},
                                   context_instance=RequestContext(request))
     if request.method == 'POST':
         form = TeamForm(request.POST,instance=team)
@@ -348,16 +350,18 @@ def rank_teams(request):
     print "Got ranked teams"
     teams = [(team,
               tab_logic.tot_wins(team),
-              tab_logic.tot_speaks(team),
-              tab_logic.tot_ranks(team))
+              tab_logic.tot_ranks(team) - tab_logic.opp_strength(team),
+              tab_logic.tot_ranks(team),
+              tab_logic.tot_speaks(team))
               for team in ranked_teams]
 
     print "started novice rankings: ", datetime.now()
     ranked_novice_teams = tab_logic.rank_nov_teams()
     nov_teams = [(team,
                   tab_logic.tot_wins(team),
-                  tab_logic.tot_speaks(team),
-                  tab_logic.tot_ranks(team))
+                  tab_logic.tot_ranks(team) - tab_logic.opp_strength(team),
+                  tab_logic.tot_ranks(team),
+                  tab_logic.tot_speaks(team))
                   for team in ranked_novice_teams]
 
     print "Got ranked novice teams"
@@ -374,6 +378,7 @@ def team_stats(request, team_id):
         stats = {}
         stats["seed"] = Team.get_seed_display(team).split(" ")[0]
         stats["wins"] = tab_logic.tot_wins(team)
+        stats["rmo"] = tab_logic.tot_ranks(team) - tab_logic.opp_strength(team)
         stats["total_speaks"] = tab_logic.tot_speaks(team)
         stats["govs"] = tab_logic.num_govs(team)
         stats["opps"] = tab_logic.num_opps(team)

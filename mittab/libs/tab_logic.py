@@ -543,11 +543,12 @@ def team_comp(pairing, round_number):
 
 def team_score(team):
     """A tuple representing the passed team's performance at the tournament"""
-    score = (0,0,0,0,0,0,0,0)
+    score = (0,0,0,0,0,0,0,0,0)
     try:
         score = (-tot_wins(team),
-                 -tot_speaks(team),
+                  tot_ranks(team) - opp_strength(team),
                   tot_ranks(team),
+                 -tot_speaks(team),
                  -single_adjusted_speaks(team),
                   single_adjusted_ranks(team),
                  -double_adjusted_speaks(team),
