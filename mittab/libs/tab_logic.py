@@ -543,16 +543,36 @@ def team_comp(pairing, round_number):
 
 def team_score(team):
     """A tuple representing the passed team's performance at the tournament"""
+    score = (0,0,0,0,0,0,0,0)
+    try:
+        score = (-tot_wins(team),
+                  tot_ranks(team),
+                 -tot_speaks(team),
+                  single_adjusted_ranks(team),
+                 -single_adjusted_speaks(team),
+                  double_adjusted_ranks(team),
+                 -double_adjusted_speaks(team),
+                 -opp_strength(team))
+    except Exception:
+        print "Could not calculate team score for {}".format(team)
+    return score
+
+def ros_team_score(team):
+    """A tuple representing the passed team's performance at the tournament
+
+    This differs from team_score because it takes into account
+    ranks - opp wins
+    """
     score = (0,0,0,0,0,0,0,0,0)
     try:
         score = (-tot_wins(team),
                   tot_ranks(team) - opp_strength(team),
                   tot_ranks(team),
                  -tot_speaks(team),
-                 -single_adjusted_speaks(team),
                   single_adjusted_ranks(team),
-                 -double_adjusted_speaks(team),
+                 -single_adjusted_speaks(team),
                   double_adjusted_ranks(team),
+                 -double_adjusted_speaks(team),
                  -opp_strength(team))
     except Exception:
         print "Could not calculate team score for {}".format(team)
@@ -562,7 +582,12 @@ def team_score_except_record(team):
     return team_score(team)[1:]
 
 def rank_teams():
-    return sorted(all_teams(), key=team_score)
+    current_round = TabSettings.get('cur_round')
+    total_rounds = TabSettings.get('tot_rounds')
+    if current_round > total_rounds:
+        return sorted(all_teams(), key=ros_team_score)
+    else:
+        return sorted(all_teams(), key=team_score)
 
 def rank_teams_except_record(teams):
     return sorted(teams, key=team_score_except_record)
