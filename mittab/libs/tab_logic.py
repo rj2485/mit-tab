@@ -58,136 +58,147 @@ def pair_round():
         n = NoShow(no_show_team = t, round_number = current_round)
         n.save()
 
-    # If it is the first round, pair by *seed*
-    if current_round == 1:
-        list_of_teams = list(Team.objects.filter(checked_in=True))
-
-        # If there are an odd number of teams, give a random team the bye
-        if len(list_of_teams) % 2 == 1:
-            b = Bye(bye_team = list_of_teams[random.randint(0,len(list_of_teams)-1)], round_number = current_round)
-            b.save()
-            list_of_teams.remove(b.bye_team)
-
-        # Sort the teams by seed. We must randomize beforehand so that similarly
-        # seeded teams are paired randomly.
-        random.shuffle(list_of_teams)
-        list_of_teams = sorted(list_of_teams, key=lambda team: team.seed, reverse = True)
-
-        #pairings = [None]* Team.objects.count()/2
-    # Otherwise, pair by *speaks*
-    else:
-        bye_teams = [bye.bye_team for bye in Bye.objects.all()]
-        # For each time that a team has won by forfeit, add them
-        # to the list of bye_teams
-        bye_teams = bye_teams + team_wins_by_forfeit()
-        # FIXME (jolynch): Why is this random thing here? - (julia) If there are multiple teams that have had the bye/won by forfeit,
-        #we want to order that they are inserted into the middle of the bracket to be random.  I need to change the code below so
-        #that this is actually true/used - See issue 3
-        random.shuffle(bye_teams, random=random.random)
-
-        # Bucket all the teams into brackets
-        # NOTE: We do not bucket teams that have only won by
-        #       forfeit/bye in every round because they have no speaks
-        all_checked_in_teams = Team.objects.filter(checked_in=True)
-        team_buckets = [(tot_wins(team), team)
-                        for team in all_checked_in_teams
-                        if current_round - bye_teams.count(team) != 1]
-        list_of_teams = [rank_teams_except_record([team
-                                                  for (w,team) in team_buckets
-                                                  if w == i])
-                         for i in range(current_round)]
-
-        # Take care of teams that only have forfeits/byes
-        # FIXME (julia): This should just look at the bye teams. No need to look at all teams, plus looking only at bye teams will
-        #insert them in a random order. See issue 3
-        if len(bye_teams) != 0:
-            for t in list(Team.objects.filter(checked_in=True)):
-                # pair into the middle
-                if current_round-bye_teams.count(t) == 1:
-                    print t
-                    list_of_teams[current_round-1].insert(int(float(len(list_of_teams[tot_wins(t)]))/2.0),t)
-        print "these are the teams before pullups"
-        print pprint.pprint(list_of_teams)
-
-        # Correct for brackets with odd numbers of teams
-        #  1) If we are in the bottom bracket, give someone a bye
-        #  2) If we are in 1-up bracket and there are no all down
-        #     teams, give someone a bye
-        #  FIXME: Do we need to do special logic for smaller brackets? - (julia) I need to make the logic more general to deal
-        # with if there are no teams in the all down or up one bracket. See Issue 4
-        #  3) Otherwise, find a pull up from the next bracket
-        for bracket in reversed(range(current_round)):
-            if len(list_of_teams[bracket]) % 2 != 0:
-                #print "need pull-up"
-                # If there are no teams all down, give the bye to a one down team.
-                if bracket == 0:
-                    byeint = len(list_of_teams[bracket])-1
-                    b = Bye(bye_team = list_of_teams[bracket][byeint],
-                            round_number = current_round)
-                    b.save()
-                    list_of_teams[bracket].remove(list_of_teams[bracket][byeint])
-                elif bracket == 1 and len(list_of_teams[0]) == 0: #in 1 up and no all down teams
-                    found_bye = False
-                    for byeint in range(len(list_of_teams[1])-1, -1, -1):
-                        if had_bye(list_of_teams[1][byeint]):
-                            pass
-                        elif found_bye == False:
-                            b = Bye(bye_team = list_of_teams[1][byeint], round_number = current_round)
-                            b.save()
-                            list_of_teams[1].remove(list_of_teams[1][byeint])
-                            found_bye = True
-                    if found_bye == False:
-                        raise errors.NotEnoughTeamsError()
-                else:
-                    pull_up = None
-                    # FIXME (jolynch): Try to use descriptive variable names. (julia) - I'll fix this.
-                    # instead of commenting
-
-                    # i is the last team in the bracket below
-                    i = len(list_of_teams[bracket-1]) - 1
-                    pullup_rounds = Round.objects.exclude(pullup=Round.NONE)
-                    teams_been_pulled_up = [r.gov_team for r in pullup_rounds if r.pullup == Round.GOV]
-                    teams_been_pulled_up.extend([r.opp_team for r in pullup_rounds if r.pullup == Round.OPP])
-                    #find the lowest team in bracket below that can be pulled up
-                    while pull_up == None:
-                        if list_of_teams[bracket-1][i] not in teams_been_pulled_up:
-                            pull_up = list_of_teams[bracket-1][i]
-                            all_pull_ups.append(pull_up)
-                            list_of_teams[bracket].append(pull_up)
-                            list_of_teams[bracket-1].remove(pull_up)
-                            #after adding pull-up to new bracket and deleting from old, sort again by speaks making sure to leave any first
-                            #round bye in the correct spot
-                            removed_teams = []
-                            for t in list(Team.objects.filter(checked_in=True)):
-                                #They have all wins and they haven't forfeited so they need to get paired in
-                                if current_round-bye_teams.count(t) == 1 and tot_wins(t) == bracket:
-                                    removed_teams += [t]
-                                    list_of_teams[bracket].remove(t)
-                            list_of_teams[bracket] = rank_teams_except_record(list_of_teams[bracket])
-                            print "list of teams in " + str(bracket) + " except removed"
-                            print list_of_teams[bracket]
-                            for t in removed_teams:
-                                list_of_teams[bracket].insert(len(list_of_teams[bracket])/2,t)
-                        else:
-                            i-=1
-    print "these are the teams after pullups"
-    print pprint.pprint(list_of_teams)
-    if current_round > 1:
-        for i in range(len(list_of_teams)):
-            print "Bracket %i has %i teams" % (i, len(list_of_teams[i]))
-
-    # Pass in the prepared nodes to the perfect pairing logic
-    # to get a pairing for the round
-    pairings = []
-    for bracket in range(current_round):
+    all_pairings = []
+    for novice in [True, False]:
+        print "Doing novice:", novice
+        # If it is the first round, pair by *seed*
         if current_round == 1:
-            temp = pairing_alg.perfect_pairing(list_of_teams)
-        else:
-            temp = pairing_alg.perfect_pairing(list_of_teams[bracket])
-            print "Pairing round %i of size %i" % (bracket,len(temp))
-        for pair in temp:
-            pairings.append([pair[0],pair[1],[None],[None]])
+            list_of_teams = list(Team.objects.filter(checked_in=True))
+            list_of_teams = [t for t in list_of_teams if t.is_novice() == novice]
 
+            # If there are an odd number of teams, give a random team the bye
+            if len(list_of_teams) % 2 == 1:
+                b = Bye(bye_team = list_of_teams[random.randint(0,len(list_of_teams)-1)], round_number = current_round)
+                b.save()
+                list_of_teams.remove(b.bye_team)
+
+            # Sort the teams by seed. We must randomize beforehand so that similarly
+            # seeded teams are paired randomly.
+            random.shuffle(list_of_teams)
+            list_of_teams = sorted(list_of_teams, key=lambda team: team.seed, reverse = True)
+
+            #pairings = [None]* Team.objects.count()/2
+        # Otherwise, pair by *speaks*
+        else:
+            bye_teams = [bye.bye_team for bye in Bye.objects.all()]
+            # For each time that a team has won by forfeit, add them
+            # to the list of bye_teams
+            bye_teams = bye_teams + team_wins_by_forfeit()
+            bye_teams = [t for t in bye_teams if t.is_novice() == novice]
+            # FIXME (jolynch): Why is this random thing here? - (julia) If there are multiple teams that have had the bye/won by forfeit,
+            #we want to order that they are inserted into the middle of the bracket to be random.  I need to change the code below so
+            #that this is actually true/used - See issue 3
+            random.shuffle(bye_teams, random=random.random)
+
+            # Bucket all the teams into brackets
+            # NOTE: We do not bucket teams that have only won by
+            #       forfeit/bye in every round because they have no speaks
+
+            all_checked_in_teams = Team.objects.filter(checked_in=True)
+            all_checked_in_teams = [t for t in all_checked_in_teams if t.is_novice() == novice]
+
+            team_buckets = [(tot_wins(team), team)
+                            for team in all_checked_in_teams
+                            if current_round - bye_teams.count(team) != 1]
+            list_of_teams = [rank_teams_except_record([team
+                                                      for (w,team) in team_buckets
+                                                      if w == i])
+                             for i in range(current_round)]
+
+            # Take care of teams that only have forfeits/byes
+            # FIXME (julia): This should just look at the bye teams. No need to look at all teams, plus looking only at bye teams will
+            #insert them in a random order. See issue 3
+            if len(bye_teams) != 0:
+                for t in list(Team.objects.filter(checked_in=True)):
+                    # pair into the middle
+                    if current_round-bye_teams.count(t) == 1:
+                        print t
+                        list_of_teams[current_round-1].insert(int(float(len(list_of_teams[tot_wins(t)]))/2.0),t)
+            print "these are the teams before pullups"
+            print pprint.pprint(list_of_teams)
+
+            # Correct for brackets with odd numbers of teams
+            #  1) If we are in the bottom bracket, give someone a bye
+            #  2) If we are in 1-up bracket and there are no all down
+            #     teams, give someone a bye
+            #  FIXME: Do we need to do special logic for smaller brackets? - (julia) I need to make the logic more general to deal
+            # with if there are no teams in the all down or up one bracket. See Issue 4
+            #  3) Otherwise, find a pull up from the next bracket
+            for bracket in reversed(range(current_round)):
+                if len(list_of_teams[bracket]) % 2 != 0:
+                    #print "need pull-up"
+                    # If there are no teams all down, give the bye to a one down team.
+                    if bracket == 0:
+                        byeint = len(list_of_teams[bracket])-1
+                        b = Bye(bye_team = list_of_teams[bracket][byeint],
+                                round_number = current_round)
+                        b.save()
+                        list_of_teams[bracket].remove(list_of_teams[bracket][byeint])
+                    elif bracket == 1 and len(list_of_teams[0]) == 0: #in 1 up and no all down teams
+                        found_bye = False
+                        for byeint in range(len(list_of_teams[1])-1, -1, -1):
+                            if had_bye(list_of_teams[1][byeint]):
+                                pass
+                            elif found_bye == False:
+                                b = Bye(bye_team = list_of_teams[1][byeint], round_number = current_round)
+                                b.save()
+                                list_of_teams[1].remove(list_of_teams[1][byeint])
+                                found_bye = True
+                        if found_bye == False:
+                            raise errors.NotEnoughTeamsError()
+                    else:
+                        pull_up = None
+                        # FIXME (jolynch): Try to use descriptive variable names. (julia) - I'll fix this.
+                        # instead of commenting
+
+                        # i is the last team in the bracket below
+                        i = len(list_of_teams[bracket-1]) - 1
+                        pullup_rounds = Round.objects.exclude(pullup=Round.NONE)
+                        teams_been_pulled_up = [r.gov_team for r in pullup_rounds if r.pullup == Round.GOV]
+                        teams_been_pulled_up.extend([r.opp_team for r in pullup_rounds if r.pullup == Round.OPP])
+                        #find the lowest team in bracket below that can be pulled up
+                        while pull_up == None:
+                            if list_of_teams[bracket-1][i] not in teams_been_pulled_up:
+                                pull_up = list_of_teams[bracket-1][i]
+                                all_pull_ups.append(pull_up)
+                                list_of_teams[bracket].append(pull_up)
+                                list_of_teams[bracket-1].remove(pull_up)
+                                #after adding pull-up to new bracket and deleting from old, sort again by speaks making sure to leave any first
+                                #round bye in the correct spot
+                                removed_teams = []
+                                for t in list(Team.objects.filter(checked_in=True)):
+                                    #They have all wins and they haven't forfeited so they need to get paired in
+                                    if current_round-bye_teams.count(t) == 1 and tot_wins(t) == bracket:
+                                        removed_teams += [t]
+                                        list_of_teams[bracket].remove(t)
+                                list_of_teams[bracket] = rank_teams_except_record(list_of_teams[bracket])
+                                print "list of teams in " + str(bracket) + " except removed"
+                                print list_of_teams[bracket]
+                                for t in removed_teams:
+                                    list_of_teams[bracket].insert(len(list_of_teams[bracket])/2,t)
+                            else:
+                                i-=1
+        print "these are the teams after pullups"
+        print pprint.pprint(list_of_teams)
+        if current_round > 1:
+            for i in range(len(list_of_teams)):
+                print "Bracket %i has %i teams" % (i, len(list_of_teams[i]))
+
+        # Pass in the prepared nodes to the perfect pairing logic
+        # to get a pairing for the round
+        pairings = []
+        for bracket in range(current_round):
+            if current_round == 1:
+                temp = pairing_alg.perfect_pairing(list_of_teams)
+            else:
+                temp = pairing_alg.perfect_pairing(list_of_teams[bracket])
+                print "Pairing round %i of size %i" % (bracket,len(temp))
+            for pair in temp:
+                pairings.append([pair[0],pair[1],[None],[None]])
+
+        all_pairings.extend(pairings)
+
+    pairings = all_pairings
     # FIXME: WHY DO WE RANDOMIZE THIS - we want the order of which fullseeded teams get the best judge to be random.
     # We should possibly also sort on the weakest team first? I.e. a fullseed/halfseed should get a better judge than a
     # fullseed/freeseed, etc. - Julia to fix. Issue 6.
