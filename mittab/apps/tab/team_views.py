@@ -368,8 +368,12 @@ def team_stats(request, team_id):
     team_id = int(team_id)
     try:
         team = Team.objects.get(pk=team_id)
+        var = '(V)'
+        if team.is_novice():
+            var = '(N)'
         stats = {}
         stats["seed"] = Team.get_seed_display(team).split(" ")[0]
+        stats["varsity"] = var
         stats["wins"] = tab_logic.tot_wins(team)
         stats["total_speaks"] = tab_logic.tot_speaks(team)
         stats["govs"] = tab_logic.num_govs(team)

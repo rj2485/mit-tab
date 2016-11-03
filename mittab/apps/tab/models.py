@@ -92,6 +92,12 @@ class Team(models.Model):
             s.delete()
         super(Team, self).delete()
 
+    def is_novice(self):
+        for debater in self.debaters.all():
+            if debater.novice_status == Debater.NOVICE:
+                return True
+        return False
+
 
 class Judge(models.Model):
     name = models.CharField(max_length=30, unique = True)
