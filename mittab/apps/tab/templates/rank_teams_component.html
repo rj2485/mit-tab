@@ -4,15 +4,25 @@
             <th colspan=5> Varsity Team Ranking </th>
         </tr>
         <tr>
-                <th>#</th><th>Team Name</th><th>Wins</th><th>Speaks</th><th>Ranks</th>
-        </tr>    
-        {% for team,wins,speaks,ranks in varsity %}
+                <th>#</th>
+                <th>Team Name</th>
+                <th>Wins</th>
+                <th>Speaks</th>
+                <th>Ranks</th>
+                <th>1-Adj Speaks</th>
+                <th>1-Adj Ranks</th>
+                <th>Opp strength</th>
+        </tr>
+        {% for team, wins, speaks, ranks, adj_speaks, adj_ranks, opp_wins in varsity %}
         <tr>
             <td> {{forloop.counter}} </td>
             <td> <a href="/team/{{team.id}}">{{team.name}}</a></td>
             <td> {{wins}}</td>
             <td> {{speaks|floatformat:2}}</td>
             <td> {{ranks|floatformat:2}}</td>
+            <td> {{adj_speaks|floatformat:2}}</td>
+            <td> {{adj_ranks|floatformat:2}}</td>
+            <td> {{opp_wins}}</td>
         </tr>
         {% endfor %}
     </table>
@@ -23,15 +33,25 @@
             <th colspan=5>Novice Team Ranking</th> 
         </tr>
         <tr>
-                <th>#</th><th>Team Name</th><th>Wins</th><th>Speaks</th><th>Ranks</th>
-        </tr>    
-        {% for team,wins,speaks,ranks in novice %}
+                <th>#</th>
+                <th>Team Name</th>
+                <th>Wins</th>
+                <th>Speaks</th>
+                <th>Ranks</th>
+                <th>1-Adj Speaks</th>
+                <th>1-Adj Ranks</th>
+                <th>Opp strength</th>
+        </tr>
+        {% for team, wins, speaks, ranks, adj_speaks, adj_ranks, opp_wins in novice %}
         <tr>
             <td> {{forloop.counter}} </td>
             <td> <a href="/team/{{team.id}}">{{team.name}}</a></td>
             <td> {{wins}}</td>
             <td> {{speaks|floatformat:2}}</td>
             <td> {{ranks|floatformat:2}}</td>
+            <td> {{adj_speaks|floatformat:2}}</td>
+            <td> {{adj_ranks|floatformat:2}}</td>
+            <td> {{opp_wins}}</td>
         </tr>
         {% endfor %}
     </table>

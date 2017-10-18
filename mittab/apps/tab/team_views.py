@@ -18,7 +18,7 @@ def view_teams(request):
         else:
             result |= TabFlags.TEAM_NOT_CHECKED_IN
         return result
-    
+
     c_teams = [(t.pk, t.name, flags(t), TabFlags.flags_to_symbols(flags(t)))
                for t in Team.objects.all().order_by("name")]
     all_flags = [[TabFlags.TEAM_CHECKED_IN, TabFlags.TEAM_NOT_CHECKED_IN]]
@@ -76,11 +76,11 @@ def view_team(request, team_id):
                                   'team_obj':team,
                                   'team_stats':stats}, 
                                   context_instance=RequestContext(request))
-    
+
     return render_to_response('data_entry.html', 
                              {'form': form}, 
                              context_instance=RequestContext(request))
-    
+
 def enter_team(request):
     if request.method == 'POST':
         form = TeamEntryForm(request.POST)
@@ -345,7 +345,10 @@ def rank_teams(request):
     teams = [(team,
               tab_logic.tot_wins(team),
               tab_logic.tot_speaks(team),
-              tab_logic.tot_ranks(team))
+              tab_logic.tot_ranks(team),
+              tab_logic.single_adjusted_speaks(team),
+              tab_logic.single_adjusted_ranks(team),
+              tab_logic.opp_strength(team))
               for team in ranked_teams]
 
     print "started novice rankings: ", datetime.now()
@@ -353,7 +356,10 @@ def rank_teams(request):
     nov_teams = [(team,
                   tab_logic.tot_wins(team),
                   tab_logic.tot_speaks(team),
-                  tab_logic.tot_ranks(team))
+                  tab_logic.tot_ranks(team),
+                  tab_logic.single_adjusted_speaks(team),
+                  tab_logic.single_adjusted_ranks(team),
+                  tab_logic.opp_strength(team))
                   for team in ranked_novice_teams]
 
     print "Got ranked novice teams"
@@ -378,5 +384,3 @@ def team_stats(request, team_id):
         data = {'success': False}
     data = json.dumps(data)
     return HttpResponse(data, mimetype='application/json')
-
-
