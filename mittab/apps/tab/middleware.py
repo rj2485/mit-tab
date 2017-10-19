@@ -1,7 +1,7 @@
 from django.contrib.auth.views import login
 from django.http import HttpResponseRedirect
 
-login_white_list = ('/accounts/login/', '/static/css/stylesheet.css', '/static/images/title_banner.png', '/pairings/pairinglist/')
+login_white_list = ('/accounts/login/', '/static/css/stylesheet.css', '/static/images/title_banner.png')
 #backend_white_list = ('/static/css/stylesheet.css', '/enter_tab/', '/static/images/title_banner.png')
 
 class Login:
