@@ -7,8 +7,13 @@
 
 <div id="batch_checkin">
   {% for form in forms %}
-  {{ form.judge.name }}
-  {{ form }}
+  <div class="checkin_row row">
+    <p>{{ form.judge.name }}</p>
+
+    {{ form.as_ul }}
+
+    {{ form.submit }}
+  </div>
   {% endfor %}
 </div>
 

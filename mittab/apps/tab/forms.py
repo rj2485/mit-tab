@@ -33,18 +33,22 @@ class JudgeCheckinForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         judge = kwargs.pop('judge')
+        num_rounds = kwargs.pop('num_rounds')
         self.judge = judge
+
         super(JudgeCheckinForm, self).__init__(*args, **kwargs)
         self.fields['judge_instance'] = forms.IntegerField(initial=judge.pk,
                                                            widget=forms.HiddenInput())
 
-        num_rounds = TabSettings.get('tot_rounds')
         checkins = map(lambda c: c.round_number, CheckIn.objects.filter(judge=judge))
         for i in range(num_rounds):
             checked_in = (i + 1) in checkins
-            self.fields['checkin_%s' % i] = forms.BooleanField(label="Checked in for round %s?"%(i+1),
+            self.fields['checkin_%s' % i] = forms.BooleanField(label="Round: %s"%(i+1),
                                                                initial=checked_in,
                                                                required=False)
+
+    def checkin_field(round_num):
+        return self.fields['checkin_%s' % round_num]
 
 class JudgeForm(forms.ModelForm):
     schools = forms.ModelMultipleChoiceField(queryset=School.objects.all(),

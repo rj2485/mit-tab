@@ -97,10 +97,12 @@ def view_judge(request, judge_id):
 
 def checkin_judges(request):
     judges = Judge.objects.all()
-    forms = [ JudgeCheckinForm(judge=judge) for judge in judges ]
+    num_rounds = TabSettings.get('tot_rounds')
+    print('ROUNDS', num_rounds)
+    forms = [ JudgeCheckinForm(judge=judge, num_rounds=num_rounds) for judge in judges ]
     return render_to_response(
             'judge_checkin.html',
-            {'forms': forms},
+            {'forms': forms, 'round_nums': range(num_rounds)},
             context_instance=RequestContext(request))
 
 
