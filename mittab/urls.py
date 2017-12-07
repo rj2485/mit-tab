@@ -33,6 +33,7 @@ urlpatterns = patterns('',
     url(r'^judge/(\d+)/scratches/add/(\d+)/', judge_views.add_scratches),
     url(r'^judge/(\d+)/scratches/view/', judge_views.view_scratches),
     url(r'^view_judges/$', judge_views.view_judges),
+    url(r'^checkin_judges/$', judge_views.checkin_judges),
     url(r'^enter_judge/$', judge_views.enter_judge),
 
     # School related

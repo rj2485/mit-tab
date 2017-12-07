@@ -23,9 +23,28 @@ class SchoolForm(forms.ModelForm):
     class Meta:
         model = School
 
+
 class RoomForm(forms.ModelForm):
     class Meta:
         model = Room
+
+
+class JudgeCheckinForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        judge = kwargs.pop('judge')
+        self.judge = judge
+        super(JudgeCheckinForm, self).__init__(*args, **kwargs)
+        self.fields['judge_instance'] = forms.IntegerField(initial=judge.pk,
+                                                           widget=forms.HiddenInput())
+
+        num_rounds = TabSettings.get('tot_rounds')
+        checkins = map(lambda c: c.round_number, CheckIn.objects.filter(judge=judge))
+        for i in range(num_rounds):
+            checked_in = (i + 1) in checkins
+            self.fields['checkin_%s' % i] = forms.BooleanField(label="Checked in for round %s?"%(i+1),
+                                                               initial=checked_in,
+                                                               required=False)
 
 class JudgeForm(forms.ModelForm):
     schools = forms.ModelMultipleChoiceField(queryset=School.objects.all(),
@@ -278,6 +297,8 @@ class ResultEntryForm(forms.Form):
     def has_invalid_ranks(self):
         ranks = [ int(self.deb_attr_val(d, "ranks")) for d in self.DEBATERS ]
         return sorted(ranks) != [1, 2, 3, 4]
+
+
 
 def validate_panel(result):
     all_good = True

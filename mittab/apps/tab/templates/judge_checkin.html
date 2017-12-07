@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Judge Check-in{% endblock %}
+{% block banner %}Judge Check-in{% endblock %}
+
+{% block content %}
+
+<div id="batch_checkin">
+  {% for form in forms %}
+  {{ form.judge.name }}
+  {{ form }}
+  {% endfor %}
+</div>
+
+{% endblock %}

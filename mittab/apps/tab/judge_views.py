@@ -2,7 +2,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import Http404,HttpResponse,HttpResponseRedirect
 from django.contrib.auth.decorators import permission_required
-from forms import JudgeForm, ScratchForm
+from forms import JudgeForm, JudgeCheckinForm, ScratchForm
 #New Models based approach
 from models import *
 from django.db import models
@@ -94,6 +94,15 @@ def view_judge(request, judge_id):
                                   'links': links,
                                   'title': "Viewing Judge: %s" %(judge.name)}, 
                                   context_instance=RequestContext(request))
+
+def checkin_judges(request):
+    judges = Judge.objects.all()
+    forms = [ JudgeCheckinForm(judge=judge) for judge in judges ]
+    return render_to_response(
+            'judge_checkin.html',
+            {'forms': forms},
+            context_instance=RequestContext(request))
+
 
 def enter_judge(request):
     if request.method == 'POST':
