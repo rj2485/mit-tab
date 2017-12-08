@@ -96,7 +96,7 @@ def view_judge(request, judge_id):
                                   context_instance=RequestContext(request))
 
 def checkin_judges(request):
-    judges = Judge.objects.all()
+    judges = Judge.objects.all().order_by('name')
     num_rounds = TabSettings.get('tot_rounds')
     print('ROUNDS', num_rounds)
     forms = [ JudgeCheckinForm(judge=judge, num_rounds=num_rounds) for judge in judges ]

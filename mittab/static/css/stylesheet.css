@@ -458,3 +458,35 @@ div.spacer {
 .input-super-mini {
   width: 40px;
 }
+
+/* Judge check-in view */
+
+#batch_checkin {
+  margin-top: 20px;
+}
+
+#batch_checkin li {
+  list-style-type: none;
+  float: left;
+  display: block;
+  padding: 5px;
+}
+
+#batch_checkin li > * {
+  float: left;
+  display: block;
+  padding: 1px;
+}
+
+#batch_checkin li input {
+  margin-left: 3px;
+}
+
+.checkin_row {
+  width: 100%;
+  padding: 5px;
+}
+
+.checkin_row:nth-of-type(odd) {
+  background-color: lightgrey;
+}

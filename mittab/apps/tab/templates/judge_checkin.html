@@ -5,14 +5,12 @@
 
 {% block content %}
 
-<div id="batch_checkin">
+<div id="batch_checkin" class="container">
   {% for form in forms %}
   <div class="checkin_row row">
-    <p>{{ form.judge.name }}</p>
-
-    {{ form.as_ul }}
-
-    {{ form.submit }}
+    <div class="span3"><p>{{ form.judge.name }}</p></div>
+    <div class="span8">{{ form.as_ul }}</div>
+    <div class="span1">Submit</div>
   </div>
   {% endfor %}
 </div>
