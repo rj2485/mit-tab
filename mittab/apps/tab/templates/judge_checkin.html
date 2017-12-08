@@ -8,9 +8,11 @@
 <div id="batch_checkin" class="container">
   {% for form in forms %}
   <div class="checkin_row row">
-    <div class="span3"><p>{{ form.judge.name }}</p></div>
-    <div class="span8">{{ form.as_ul }}</div>
-    <div class="span1">Submit</div>
+    <form action="/" method="post">
+      <div class="span3"><p>{{ form.judge.name }}</p></div>
+      <div class="span8">{{ form.as_ul }}</div>
+      <div class="span1"><input class="btn" type="submit" value="Submit" /></div>
+    </form>
   </div>
   {% endfor %}
 </div>

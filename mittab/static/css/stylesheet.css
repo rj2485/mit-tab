@@ -463,6 +463,10 @@ div.spacer {
 
 #batch_checkin {
   margin-top: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
 }
 
 #batch_checkin li {
@@ -483,10 +487,10 @@ div.spacer {
 }
 
 .checkin_row {
-  width: 100%;
   padding: 5px;
+  border-bottom: 1px solid #ddd;
 }
 
 .checkin_row:nth-of-type(odd) {
-  background-color: lightgrey;
+  background-color: #eee;
 }
