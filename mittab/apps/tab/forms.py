@@ -32,23 +32,27 @@ class RoomForm(forms.ModelForm):
 class JudgeCheckinForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        judge = kwargs.pop('judge')
-        num_rounds = kwargs.pop('num_rounds')
-        self.judge = judge
+        self.judge = kwargs.pop('judge')
+        self.num_rounds = kwargs.pop('num_rounds')
 
         super(JudgeCheckinForm, self).__init__(*args, **kwargs)
-        self.fields['judge_instance'] = forms.IntegerField(initial=judge.pk,
-                                                           widget=forms.HiddenInput())
 
-        checkins = map(lambda c: c.round_number, CheckIn.objects.filter(judge=judge))
-        for i in range(num_rounds):
+        checkins = map(lambda c: c.round_number, CheckIn.objects.filter(judge=self.judge))
+        for i in range(self.num_rounds):
             checked_in = (i + 1) in checkins
             self.fields['checkin_%s' % i] = forms.BooleanField(label="Round: %s"%(i+1),
                                                                initial=checked_in,
                                                                required=False)
 
-    def checkin_field(round_num):
-        return self.fields['checkin_%s' % round_num]
+    def save(self):
+        for i in range(self.num_rounds):
+            if 'checkin_%s' % (i) in self.cleaned_data:
+                should_be_checked_in = self.cleaned_data['checkin_%s'%(i)]
+                if should_be_checked_in:
+                    self.judge.check_in(i+1)
+                elif not should_be_checked_in:
+                    self.judge.check_out(i+1)
+
 
 class JudgeForm(forms.ModelForm):
     schools = forms.ModelMultipleChoiceField(queryset=School.objects.all(),
@@ -75,16 +79,12 @@ class JudgeForm(forms.ModelForm):
         judge = super(JudgeForm, self).save(commit)
         num_rounds = TabSettings.objects.get(key="tot_rounds").value
         for i in range(num_rounds):
-            if "checkin_%s"%(i) in self.cleaned_data:
+            if 'checkin_%s' % (i) in self.cleaned_data:
                 should_be_checked_in = self.cleaned_data['checkin_%s'%(i)]
-                checked_in = CheckIn.objects.filter(judge=judge, round_number=i+1)
-                # Two cases, either the judge is not checked in and the user says he is,
-                # or the judge is checked in and the user says he is not
-                if not checked_in and should_be_checked_in:
-                    checked_in = CheckIn(judge=judge, round_number=i+1)
-                    checked_in.save()
-                elif checked_in and not should_be_checked_in:
-                    checked_in.delete()
+                if should_be_checked_in:
+                    judge.check_in(i+1)
+                elif not should_be_checked_in:
+                    judge.check_out(i+1)
 
         return judge
 

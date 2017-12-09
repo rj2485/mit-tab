@@ -1,4 +1,4 @@
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.http import Http404,HttpResponse,HttpResponseRedirect
 from django.contrib.auth.decorators import permission_required
@@ -98,12 +98,22 @@ def view_judge(request, judge_id):
 def checkin_judges(request):
     judges = Judge.objects.all().order_by('name')
     num_rounds = TabSettings.get('tot_rounds')
-    print('ROUNDS', num_rounds)
     forms = [ JudgeCheckinForm(judge=judge, num_rounds=num_rounds) for judge in judges ]
     return render_to_response(
             'judge_checkin.html',
             {'forms': forms, 'round_nums': range(num_rounds)},
             context_instance=RequestContext(request))
+
+
+def checkin_judge(request, judge_id):
+    if request.method == 'POST':
+        num_rounds = TabSettings.get('tot_rounds')
+        judge = Judge.objects.get(pk=judge_id)
+        form = JudgeCheckinForm(request.POST, judge=judge, num_rounds=num_rounds)
+        if form.is_valid():
+            form.save()
+            return redirect('/checkin_judges/')
+
 
 
 def enter_judge(request):
@@ -141,7 +151,7 @@ def delete_judge(request, judge_id):
         error_msg = "Judge does not exist"
     except Exception as e:
         error_msg = "Error deleting judge: %s" % (e)
-    
+
     if error_msg:
         return render_to_response('error.html', 
                                  {'error_type': "Judge",

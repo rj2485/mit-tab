@@ -100,8 +100,25 @@ class Judge(models.Model):
     schools = models.ManyToManyField(School)
     phone = PhoneNumberField(blank=True)
     provider = models.CharField(max_length=40, blank=True)
+
     def __unicode__(self):
         return self.name
+
+    def is_checked_in(self, round_number):
+        return CheckIn.objects.filter(judge=self, round_number=round_number).exists()
+
+    def check_in(self, round_number):
+        if not self.is_checked_in(round_number):
+            check_in = CheckIn(judge=self, round_number=round_number)
+            return check_in.save()
+        else:
+            return True
+
+    def check_out(self, round_number):
+        if self.is_checked_in(round_number):
+            return CheckIn.objects.filter(judge=self, round_number=round_number).delete()
+        else:
+            return True
 
     def delete(self):
         checkins = CheckIn.objects.filter(judge=self)

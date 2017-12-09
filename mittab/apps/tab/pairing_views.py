@@ -7,7 +7,6 @@ from django.db import transaction
 from errors import *
 from mittab.libs.errors import *
 from models import *
-from django.shortcuts import redirect
 from forms import ResultEntryForm, UploadBackupForm, score_panel, validate_panel
 import mittab.libs.cache_logic as cache_logic
 import mittab.libs.tab_logic as tab_logic

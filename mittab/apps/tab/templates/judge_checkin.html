@@ -8,7 +8,8 @@
 <div id="batch_checkin" class="container">
   {% for form in forms %}
   <div class="checkin_row row">
-    <form action="/" method="post">
+    <form action="/judge/{{ form.judge.id }}/check_ins/" method="post">
+      {% csrf_token %}
       <div class="span3"><p>{{ form.judge.name }}</p></div>
       <div class="span8">{{ form.as_ul }}</div>
       <div class="span1"><input class="btn" type="submit" value="Submit" /></div>
